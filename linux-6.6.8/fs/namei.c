@@ -218,6 +218,7 @@ getname(const char __user * filename)
 {
 	return getname_flags(filename, 0, NULL);
 }
+EXPORT_SYMBOL(getname);
 
 struct filename *
 getname_kernel(const char * filename)
@@ -618,7 +619,7 @@ static inline void set_nameidata(struct nameidata *p, int dfd, struct filename *
 	}
 }
 
-static void restore_nameidata(void)
+void restore_nameidata(void)
 {
 	struct nameidata *now = current->nameidata, *old = now->saved;
 
@@ -628,6 +629,7 @@ static void restore_nameidata(void)
 	if (now->stack != now->internal)
 		kfree(now->stack);
 }
+EXPORT_SYMBOL(restore_nameidata);
 
 static bool nd_alloc_stack(struct nameidata *nd)
 {
@@ -678,7 +680,7 @@ static void leave_rcu(struct nameidata *nd)
 	rcu_read_unlock();
 }
 
-static void terminate_walk(struct nameidata *nd)
+void terminate_walk(struct nameidata *nd)
 {
 	drop_links(nd);
 	if (!(nd->flags & LOOKUP_RCU)) {
@@ -697,6 +699,7 @@ static void terminate_walk(struct nameidata *nd)
 	nd->path.mnt = NULL;
 	nd->path.dentry = NULL;
 }
+EXPORT_SYMBOL(terminate_walk);
 
 /* path_put is needed afterwards regardless of success or failure */
 static bool __legitimize_path(struct path *path, unsigned seq, unsigned mseq)
@@ -2244,7 +2247,7 @@ static inline u64 hash_name(const void *salt, const char *name)
  * Returns 0 and nd will have valid dentry and mnt on success.
  * Returns error and drops reference to input namei data on failure.
  */
-static int link_path_walk(const char *name, struct nameidata *nd)
+int link_path_walk(const char *name, struct nameidata *nd)
 {
 	int depth = 0; // depth <= nd->depth
 	int err;
@@ -2345,9 +2348,10 @@ OK:
 		}
 	}
 }
+EXPORT_SYMBOL(link_path_walk);
 
 /* must be paired with terminate_walk() */
-static const char *path_init(struct nameidata *nd, unsigned flags)
+const char *path_init(struct nameidata *nd, unsigned flags)
 {
 	int error;
 	const char *s = nd->name->name;
@@ -2450,6 +2454,7 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
 	}
 	return s;
 }
+EXPORT_SYMBOL(path_init);
 
 static inline const char *lookup_last(struct nameidata *nd)
 {
@@ -3509,7 +3514,7 @@ out_dput:
 	return ERR_PTR(error);
 }
 
-static const char *open_last_lookups(struct nameidata *nd,
+const char *open_last_lookups(struct nameidata *nd,
 		   struct file *file, const struct open_flags *op)
 {
 	struct dentry *dir = nd->path.dentry;
@@ -3589,11 +3594,13 @@ finish_lookup:
 		nd->flags &= ~(LOOKUP_OPEN|LOOKUP_CREATE|LOOKUP_EXCL);
 	return res;
 }
+EXPORT_SYMBOL(open_last_lookups);
+
 
 /*
  * Handle the last step of open()
  */
-static int do_open(struct nameidata *nd,
+int do_open(struct nameidata *nd,
 		   struct file *file, const struct open_flags *op)
 {
 	struct mnt_idmap *idmap;
@@ -3650,6 +3657,7 @@ static int do_open(struct nameidata *nd,
 		mnt_drop_write(nd->path.mnt);
 	return error;
 }
+EXPORT_SYMBOL(do_open);
 
 /**
  * vfs_tmpfile - create tmpfile
@@ -3739,7 +3747,7 @@ struct file *kernel_tmpfile_open(struct mnt_idmap *idmap,
 }
 EXPORT_SYMBOL(kernel_tmpfile_open);
 
-static int do_tmpfile(struct nameidata *nd, unsigned flags,
+int do_tmpfile(struct nameidata *nd, unsigned flags,
 		const struct open_flags *op,
 		struct file *file)
 {
@@ -3761,8 +3769,9 @@ out:
 	path_put(&path);
 	return error;
 }
+EXPORT_SYMBOL(do_tmpfile);
 
-static int do_o_path(struct nameidata *nd, unsigned flags, struct file *file)
+int do_o_path(struct nameidata *nd, unsigned flags, struct file *file)
 {
 	struct path path;
 	int error = path_lookupat(nd, flags, &path);
@@ -3773,8 +3782,9 @@ static int do_o_path(struct nameidata *nd, unsigned flags, struct file *file)
 	}
 	return error;
 }
+EXPORT_SYMBOL(do_o_path);
 
-static struct file *path_openat(struct nameidata *nd,
+struct file *path_openat(struct nameidata *nd,
 			const struct open_flags *op, unsigned flags)
 {
 	struct file *file;
@@ -3812,6 +3822,7 @@ static struct file *path_openat(struct nameidata *nd,
 	}
 	return ERR_PTR(error);
 }
+EXPORT_SYMBOL(path_openat);
 
 struct file *do_filp_open(int dfd, struct filename *pathname,
 		const struct open_flags *op)
@@ -3829,6 +3840,7 @@ struct file *do_filp_open(int dfd, struct filename *pathname,
 	restore_nameidata();
 	return filp;
 }
+EXPORT_SYMBOL(do_filp_open);
 
 struct file *do_file_open_root(const struct path *root,
 		const char *name, const struct open_flags *op)

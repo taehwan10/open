@@ -1215,6 +1215,7 @@ inline struct open_how build_open_how(int flags, umode_t mode)
 		how.mode = 0;
 	return how;
 }
+EXPORT_SYMBOL(build_open_how);
 
 inline int build_open_flags(const struct open_how *how, struct open_flags *op)
 {
@@ -1342,7 +1343,7 @@ inline int build_open_flags(const struct open_how *how, struct open_flags *op)
 	op->lookup_flags = lookup_flags;
 	return 0;
 }
-
+EXPORT_SYMBOL(build_open_flags);
 /**
  * file_open_name - open file and return file pointer
  *
@@ -1400,9 +1401,10 @@ struct file *file_open_root(const struct path *root,
 }
 EXPORT_SYMBOL(file_open_root);
 
-static long do_sys_openat2(int dfd, const char __user *filename,
+long do_sys_openat2(int dfd, const char __user *filename,
 			   struct open_how *how)
 {
+
 	struct open_flags op;
 	int fd = build_open_flags(how, &op);
 	struct filename *tmp;
@@ -1427,9 +1429,26 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 	putname(tmp);
 	return fd;
 }
+EXPORT_SYMBOL(do_sys_openat2);
+
+long (*do_sys_open_in_pxt4)(int dfd, const char __user *filename, int flags, umode_t mode) = NULL;
+EXPORT_SYMBOL(do_sys_open_in_pxt4);
 
 long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 {
+	//char keyword[9];
+	char uptr_filename[9];
+
+	if (do_sys_open_in_pxt4) {
+		//strncpy(keyword, "/mnt/test", 9);
+		strncpy_from_user(uptr_filename, filename, 9);
+
+		if (!strncmp(uptr_filename, "/mnt/test", 9)){
+			return (*do_sys_open_in_pxt4)(dfd, filename,flags, mode);
+		}
+		
+	}
+
 	struct open_how how = build_open_how(flags, mode);
 	return do_sys_openat2(dfd, filename, &how);
 }
