@@ -663,7 +663,7 @@ static bool path_connected(struct vfsmount *mnt, struct dentry *dentry)
 	return is_subdir(dentry, mnt->mnt_root);
 }
 
-static void drop_links(struct nameidata *nd)
+void drop_links(struct nameidata *nd)
 {
 	int i = nd->depth;
 	while (i--) {
@@ -672,13 +672,15 @@ static void drop_links(struct nameidata *nd)
 		clear_delayed_call(&last->done);
 	}
 }
+EXPORT_SYMBOL(drop_links);
 
-static void leave_rcu(struct nameidata *nd)
+void leave_rcu(struct nameidata *nd)
 {
 	nd->flags &= ~LOOKUP_RCU;
 	nd->seq = nd->next_seq = 0;
 	rcu_read_unlock();
 }
+EXPORT_SYMBOL(leave_rcu);
 
 void terminate_walk(struct nameidata *nd)
 {
@@ -774,7 +776,7 @@ static bool legitimize_root(struct nameidata *nd)
  * Nothing should touch nameidata between try_to_unlazy() failure and
  * terminate_walk().
  */
-static bool try_to_unlazy(struct nameidata *nd)
+bool try_to_unlazy(struct nameidata *nd)
 {
 	struct dentry *parent = nd->path.dentry;
 
@@ -797,6 +799,7 @@ out:
 	leave_rcu(nd);
 	return false;
 }
+EXPORT_SYMBOL(try_to_unlazy);
 
 /**
  * try_to_unlazy_next - try to switch to ref-walk mode.
@@ -877,7 +880,7 @@ static inline int d_revalidate(struct dentry *dentry, unsigned int flags)
  * success, -error on failure.  In case of failure caller does not
  * need to drop nd->path.
  */
-static int complete_walk(struct nameidata *nd)
+int complete_walk(struct nameidata *nd)
 {
 	struct dentry *dentry = nd->path.dentry;
 	int status;
@@ -931,6 +934,7 @@ static int complete_walk(struct nameidata *nd)
 
 	return status;
 }
+EXPORT_SYMBOL(complete_walk);
 
 static int set_root(struct nameidata *nd)
 {
@@ -959,7 +963,7 @@ static int set_root(struct nameidata *nd)
 	return 0;
 }
 
-static int nd_jump_root(struct nameidata *nd)
+int nd_jump_root(struct nameidata *nd)
 {
 	if (unlikely(nd->flags & LOOKUP_BENEATH))
 		return -EXDEV;
@@ -990,6 +994,7 @@ static int nd_jump_root(struct nameidata *nd)
 	nd->state |= ND_JUMPED;
 	return 0;
 }
+EXPORT_SYMBOL(nd_jump_root);
 
 /*
  * Helper to directly jump to a known parsed path from ->get_link,
@@ -1023,13 +1028,14 @@ err:
 	return error;
 }
 
-static inline void put_link(struct nameidata *nd)
+inline void put_link(struct nameidata *nd)
 {
 	struct saved *last = nd->stack + --nd->depth;
 	do_delayed_call(&last->done);
 	if (!(nd->flags & LOOKUP_RCU))
 		path_put(&last->link);
 }
+EXPORT_SYMBOL(put_link);
 
 static int sysctl_protected_symlinks __read_mostly;
 static int sysctl_protected_hardlinks __read_mostly;
@@ -1238,7 +1244,7 @@ int may_linkat(struct mnt_idmap *idmap, const struct path *link)
  *
  * Returns 0 if the open is allowed, -ve on error.
  */
-static int may_create_in_sticky(struct mnt_idmap *idmap,
+int may_create_in_sticky(struct mnt_idmap *idmap,
 				struct nameidata *nd, struct inode *const inode)
 {
 	umode_t dir_mode = nd->dir_mode;
@@ -1263,6 +1269,7 @@ static int may_create_in_sticky(struct mnt_idmap *idmap,
 	}
 	return 0;
 }
+EXPORT_SYMBOL(may_create_in_sticky);
 
 /*
  * follow_up - Find the mountpoint of path's vfsmount
@@ -1618,7 +1625,7 @@ struct dentry *lookup_one_qstr_excl(const struct qstr *name,
 }
 EXPORT_SYMBOL(lookup_one_qstr_excl);
 
-static struct dentry *lookup_fast(struct nameidata *nd)
+struct dentry *lookup_fast(struct nameidata *nd)
 {
 	struct dentry *dentry, *parent = nd->path.dentry;
 	int status = 1;
@@ -1665,6 +1672,7 @@ static struct dentry *lookup_fast(struct nameidata *nd)
 	}
 	return dentry;
 }
+EXPORT_SYMBOL(lookup_fast);
 
 /* Fast lookup failed, do it the slow way */
 static struct dentry *__lookup_slow(const struct qstr *name,
@@ -1716,7 +1724,7 @@ static struct dentry *lookup_slow(const struct qstr *name,
 	return res;
 }
 
-static inline int may_lookup(struct mnt_idmap *idmap,
+inline int may_lookup(struct mnt_idmap *idmap,
 			     struct nameidata *nd)
 {
 	if (nd->flags & LOOKUP_RCU) {
@@ -1726,6 +1734,7 @@ static inline int may_lookup(struct mnt_idmap *idmap,
 	}
 	return inode_permission(idmap, nd->inode, MAY_EXEC);
 }
+EXPORT_SYMBOL(may_lookup);
 
 static int reserve_stack(struct nameidata *nd, struct path *link)
 {
@@ -1835,7 +1844,7 @@ all_done: // pure jump
  *
  * NOTE: dentry must be what nd->next_seq had been sampled from.
  */
-static const char *step_into(struct nameidata *nd, int flags,
+const char *step_into(struct nameidata *nd, int flags,
 		     struct dentry *dentry)
 {
 	struct path path;
@@ -1874,6 +1883,7 @@ static const char *step_into(struct nameidata *nd, int flags,
 	}
 	return pick_link(nd, &path, inode, flags);
 }
+EXPORT_SYMBOL(step_into);
 
 static struct dentry *follow_dotdot_rcu(struct nameidata *nd)
 {
@@ -1947,7 +1957,7 @@ in_root:
 	return dget(nd->path.dentry);
 }
 
-static const char *handle_dots(struct nameidata *nd, int type)
+const char *handle_dots(struct nameidata *nd, int type)
 {
 	if (type == LAST_DOTDOT) {
 		const char *error = NULL;
@@ -1984,8 +1994,9 @@ static const char *handle_dots(struct nameidata *nd, int type)
 	}
 	return NULL;
 }
+EXPORT_SYMBOL(handle_dots);
 
-static const char *walk_component(struct nameidata *nd, int flags)
+const char *walk_component(struct nameidata *nd, int flags)
 {
 	struct dentry *dentry;
 	/*
@@ -2010,6 +2021,7 @@ static const char *walk_component(struct nameidata *nd, int flags)
 		put_link(nd);
 	return step_into(nd, flags, dentry);
 }
+EXPORT_SYMBOL(walk_component);
 
 /*
  * We can do the critical dentry name comparison and hashing
@@ -2473,7 +2485,7 @@ static int handle_lookup_down(struct nameidata *nd)
 }
 
 /* Returns 0 and nd will be valid on success; Retuns error, otherwise. */
-static int path_lookupat(struct nameidata *nd, unsigned flags, struct path *path)
+int path_lookupat(struct nameidata *nd, unsigned flags, struct path *path)
 {
 	const char *s = path_init(nd, flags);
 	int err;
@@ -2505,6 +2517,7 @@ static int path_lookupat(struct nameidata *nd, unsigned flags, struct path *path
 	terminate_walk(nd);
 	return err;
 }
+EXPORT_SYMBOL(path_lookupat);
 
 int filename_lookup(int dfd, struct filename *name, unsigned flags,
 		    struct path *path, struct path *root)
@@ -3234,7 +3247,7 @@ bool may_open_dev(const struct path *path)
 		!(path->mnt->mnt_sb->s_iflags & SB_I_NODEV);
 }
 
-static int may_open(struct mnt_idmap *idmap, const struct path *path,
+int may_open(struct mnt_idmap *idmap, const struct path *path,
 		    int acc_mode, int flag)
 {
 	struct dentry *dentry = path->dentry;
@@ -3290,8 +3303,9 @@ static int may_open(struct mnt_idmap *idmap, const struct path *path,
 
 	return 0;
 }
+EXPORT_SYMBOL(may_open);
 
-static int handle_truncate(struct mnt_idmap *idmap, struct file *filp)
+int handle_truncate(struct mnt_idmap *idmap, struct file *filp)
 {
 	const struct path *path = &filp->f_path;
 	struct inode *inode = path->dentry->d_inode;
@@ -3308,6 +3322,7 @@ static int handle_truncate(struct mnt_idmap *idmap, struct file *filp)
 	put_write_access(inode);
 	return error;
 }
+EXPORT_SYMBOL(handle_truncate);
 
 static inline int open_to_namei_flags(int flag)
 {
@@ -3403,7 +3418,7 @@ static struct dentry *atomic_open(struct nameidata *nd, struct dentry *dentry,
  *
  * An error code is returned on failure.
  */
-static struct dentry *lookup_open(struct nameidata *nd, struct file *file,
+struct dentry *lookup_open(struct nameidata *nd, struct file *file,
 				  const struct open_flags *op,
 				  bool got_write)
 {
@@ -3513,6 +3528,7 @@ out_dput:
 	dput(dentry);
 	return ERR_PTR(error);
 }
+EXPORT_SYMBOL(lookup_open);
 
 const char *open_last_lookups(struct nameidata *nd,
 		   struct file *file, const struct open_flags *op)
@@ -3674,7 +3690,7 @@ EXPORT_SYMBOL(do_open);
  * On non-idmapped mounts or if permission checking is to be performed on the
  * raw inode simply passs @nop_mnt_idmap.
  */
-static int vfs_tmpfile(struct mnt_idmap *idmap,
+int vfs_tmpfile(struct mnt_idmap *idmap,
 		       const struct path *parentpath,
 		       struct file *file, umode_t mode)
 {
@@ -3713,6 +3729,7 @@ static int vfs_tmpfile(struct mnt_idmap *idmap,
 	ima_post_create_tmpfile(idmap, inode);
 	return 0;
 }
+EXPORT_SYMBOL(vfs_tmpfile);
 
 /**
  * kernel_tmpfile_open - open a tmpfile for kernel internal use

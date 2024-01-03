@@ -1037,6 +1037,7 @@ unsigned long __fdget_raw(unsigned int fd)
 {
 	return __fget_light(fd, 0);
 }
+EXPORT_SYMBOL(__fdget_raw);
 
 /*
  * Try to avoid f_pos locking. We only need it if the

@@ -98,6 +98,7 @@ EXPORT_SYMBOL_GPL(fs_kobj);
  * tree or hash is modified or when a vfsmount structure is modified.
  */
 __cacheline_aligned_in_smp DEFINE_SEQLOCK(mount_lock);
+EXPORT_SYMBOL(mount_lock);
 
 static inline void lock_mount_hash(void)
 {

@@ -2389,6 +2389,7 @@ out:
 	handle_path(dentry);
 	audit_copy_inode(n, dentry, inode, flags & AUDIT_INODE_NOEVAL);
 }
+EXPORT_SYMBOL(__audit_inode);
 
 void __audit_file(const struct file *file)
 {
